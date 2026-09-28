@@ -471,16 +471,21 @@
     var tokens = [];
     var text = src;
 
+    // NOTE: the placeholder is wrapped in U+2063 (INVISIBLE SEPARATOR), not a NUL
+    // byte. markdown-it normalizes real NUL characters (U+0000) to U+FFFD before
+    // parsing (per the CommonMark spec), which used to silently corrupt a NUL-based
+    // placeholder and leave "�M3�"-style markers in the rendered output
+    // instead of the math. U+2063 passes through markdown-it untouched.
     text = text.replace(/(?<!\\)\$\$([\s\S]*?)\$\$/g, function (m, latex) {
       var idx = tokens.length;
       tokens.push({ latex: latex, display: true });
-      return "\u0000M" + idx + "\u0000";
+      return "⁣M" + idx + "⁣";
     });
 
     text = text.replace(/(?<!\\)\$((?:\\.|[^$\n])+?)(?<!\\)\$/g, function (m, latex) {
       var idx = tokens.length;
       tokens.push({ latex: latex, display: false });
-      return "\u0000M" + idx + "\u0000";
+      return "⁣M" + idx + "⁣";
     });
 
     return { text: text, tokens: tokens };
@@ -516,7 +521,7 @@
     }
 
     for (var i = 0; i < extracted.tokens.length; i++) {
-      var placeholder = "\u0000M" + i + "\u0000";
+      var placeholder = "⁣M" + i + "⁣";
       html = html.split(placeholder).join(renderMathToken(extracted.tokens[i]));
     }
     mathCount.textContent = "수식 " + extracted.tokens.length + "개";
