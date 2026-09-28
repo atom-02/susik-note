@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>수식노트</title>
+<meta name="description" content="수식이 포함된 마크다운을 태블릿·휴대폰에서 편집하고 인쇄/PDF로 내보내는 앱" />
+<meta name="theme-color" content="#3454d1" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="수식노트" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icon.svg" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+<style>
+  :root {
+    --bg: #f6f6f3;
+    --surface: #ffffff;
+    --surface-2: #eef0ec;
+    --editor-bg: #fbfbf9;
+    --text: #1f2430;
+    --text-muted: #6b7280;
+    --border: #dde1da;
+    --accent: #3454d1;
+    --accent-strong: #24399e;
+    --accent-soft: #e7ecfb;
+    --danger: #b3261e;
+    --danger-soft: #fbeceb;
+    --tap: 46px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14161b;
+      --surface: #1b1e26;
+      --surface-2: #20242e;
+      --editor-bg: #181b22;
+      --text: #e7e9ee;
+      --text-muted: #9aa1af;
+      --border: #2b2f3a;
+      --accent: #7b93ff;
+      --accent-strong: #a6b6ff;
+      --accent-soft: #232a44;
+      --danger: #ff8a80;
+      --danger-soft: #3a2224;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14161b;
+    --surface: #1b1e26;
+    --surface-2: #20242e;
+    --editor-bg: #181b22;
+    --text: #e7e9ee;
+    --text-muted: #9aa1af;
+    --border: #2b2f3a;
+    --accent: #7b93ff;
+    --accent-strong: #a6b6ff;
+    --accent-soft: #232a44;
+    --danger: #ff8a80;
+    --danger-soft: #3a2224;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }
+  html { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans KR", "Noto Sans KR", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px;
+    padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+    padding-bottom: env(safe-area-inset-bottom);
+    height: 100%;
+  }
+
+  #app {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: calc(100% - 20px);
+    padding-block: 12px;
+  }
+
+  .print-only { display: none; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-right: auto;
+  }
+  .brand .mark {
+    font-family: "Noto Serif KR", serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.01em;
+  }
+  .brand .tag {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  input.filename {
+    font: inherit;
+    font-size: 15px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 10px;
+    color: var(--text);
+    width: 200px;
+    max-width: 44vw;
+    height: var(--tap);
+  }
+  input.filename:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  button {
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    padding: 8px 14px;
+    min-height: var(--tap);
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    touch-action: manipulation;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent-strong); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  button.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
+  button.ghost { background: transparent; }
+  button.danger { color: var(--danger); }
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button:disabled:hover { border-color: var(--border); color: var(--text); }
+
+  .confirm-strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+  }
+  .tabs button { flex: 1; justify-content: center; }
+  .tabs button[aria-selected="true"] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-strong);
+  }
+
+  .workspace {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    min-height: 60vh;
+  }
+
+  .pane {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .pane.hide-narrow { display: none; }
+  .pane-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .pane-head .label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .pane-head .count {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  textarea#editor {
+    flex: 1;
+    resize: none;
+    border: none;
+    outline: none;
+    padding: 16px;
+    font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    font-size: 15px;
+    line-height: 1.7;
+    background: var(--editor-bg);
+    color: var(--text);
+    width: 100%;
+  }
+
+  #preview {
+    flex: 1;
+    overflow: auto;
+    padding: 18px 20px;
+    background: var(--surface);
+    -webkit-overflow-scrolling: touch;
+  }
+  #preview.empty::before {
+    content: "여기에 렌더링된 결과가 표시됩니다.";
+    color: var(--text-muted);
+  }
+  #preview h1, #preview h2, #preview h3 {
+    font-family: "Noto Serif KR", serif;
+    text-wrap: balance;
+    line-height: 1.35;
+  }
+  #preview h1 { font-size: 24px; margin: 0 0 14px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+  #preview h2 { font-size: 19px; margin: 24px 0 10px; }
+  #preview h3 { font-size: 16px; margin: 18px 0 8px; }
+  #preview p { line-height: 1.85; margin: 0 0 14px; max-width: 68ch; }
+  #preview ul, #preview ol { line-height: 1.8; margin: 0 0 14px; padding-left: 22px; }
+  #preview li { margin-bottom: 4px; }
+  #preview code {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    background: var(--surface-2);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.92em;
+  }
+  #preview pre {
+    background: var(--surface-2);
+    padding: 12px 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+  #preview pre code { background: none; padding: 0; }
+  #preview blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 0 0 14px;
+    padding: 2px 0 2px 14px;
+    color: var(--text-muted);
+  }
+  #preview table {
+    border-collapse: collapse;
+    margin-bottom: 14px;
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  #preview th, #preview td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  #preview hr { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
+  #preview .katex-display {
+    margin: 16px 0 !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+  }
+  #preview .katex { font-size: 1.05em; }
+  .math-error {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.9em;
+  }
+
+  .statusbar {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .statusbar .save-state.saving { color: var(--accent-strong); }
+
+  input[type="file"] { display: none; }
+
+  /* Tablet and up: side-by-side workspace, tab switcher no longer needed */
+  @media (min-width: 860px) {
+    body { padding-inline: 16px; }
+    .workspace { grid-template-columns: 1fr 1fr; min-height: 480px; }
+    .tabs { display: none; }
+    .pane.hide-narrow { display: flex; }
+  }
+
+  @media print {
+    body { background: #fff; color: #000; padding: 0; }
+    .topbar, .toolbar, .confirm-strip, .tabs, .statusbar, #pane-edit, .pane-head { display: none !important; }
+    #app { max-width: none; padding: 0; gap: 0; min-height: 0; }
+    .workspace { display: block; min-height: 0; }
+    .pane { border: none; border-radius: 0; display: block !important; }
+    #preview { padding: 0; overflow: visible; background: #fff; color: #000; }
+    #preview .katex-display { break-inside: avoid; }
+    .print-only { display: block; margin-bottom: 16px; }
+    .print-only h1 { font-family: "Noto Serif KR", serif; font-size: 22px; margin: 0 0 4px; }
+    .print-only .print-date { font-size: 12px; color: #555; }
+    @page { margin: 18mm 16mm; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark">수식노트</span>
+      <span class="tag">수식이 포함된 마크다운을 편집하고 내보냅니다</span>
+    </div>
+    <input class="filename" id="filename" value="이차방정식-예제" aria-label="파일 이름" />
+  </div>
+
+  <div class="toolbar">
+    <button class="ghost" id="btn-new" title="편집 중인 내용을 지우고 새로 시작">📝 새 노트</button>
+    <button class="ghost" id="btn-open" title="기기에서 .md 파일 열기">📂 열기</button>
+    <input type="file" id="file-input" accept=".md,.markdown,.txt,text/markdown,text/plain" />
+    <button id="btn-save-md" title="마크다운(.md) 파일로 저장">💾 Markdown</button>
+    <button class="primary" id="btn-print" title="인쇄하거나 PDF로 저장">🖨️ 인쇄 / PDF</button>
+  </div>
+
+  <div id="confirm-new" class="confirm-strip" hidden>
+    <span>지금 내용을 지우고 새 노트를 시작할까요? 저장하지 않은 내용은 사라집니다.</span>
+    <button class="danger" id="confirm-new-yes">지우기</button>
+    <button class="ghost" id="confirm-new-no">취소</button>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="보기 전환">
+    <button role="tab" id="tab-edit" aria-selected="true">✏️ 에디터</button>
+    <button role="tab" id="tab-preview" aria-selected="false">👁️ 미리보기</button>
+  </div>
+
+  <div class="workspace">
+    <div class="pane" id="pane-edit">
+      <div class="pane-head">
+        <span class="label">Markdown</span>
+        <span class="count" id="char-count">0자</span>
+      </div>
+      <textarea id="editor" spellcheck="false" autocapitalize="off" autocorrect="off" aria-label="마크다운 원문 편집"></textarea>
+    </div>
+    <div class="pane hide-narrow" id="pane-preview">
+      <div class="pane-head">
+        <span class="label">미리보기</span>
+        <span class="count" id="math-count">수식 0개</span>
+      </div>
+      <div id="preview">
+        <div class="print-only" id="print-header">
+          <h1 id="print-title"></h1>
+          <div class="print-date" id="print-date"></div>
+        </div>
+        <div id="preview-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <span>인라인 수식은 <code>$…$</code>, 블록 수식은 <code>$$…$$</code> 로 씁니다.</span>
+    <span class="save-state" id="save-state">브라우저에 자동 저장됨</span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.2/markdown-it.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var SAMPLE_NOTE = [
+    "# 이차방정식의 해 (예시)",
+    "",
+    "아래 내용은 예시입니다. 자유롭게 지우고 원하는 내용을 작성하세요.",
+    "",
+    "이차방정식 $ax^2 + bx + c = 0$ ($a \\neq 0$) 의 해는 근의 공식으로 구할 수 있다.",
+    "",
+    "$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$",
+    "",
+    "## 예제",
+    "",
+    "다음 방정식을 풀어라.",
+    "",
+    "$$x^2 - 5x + 6 = 0$$",
+    "",
+    "**풀이**",
+    "",
+    "좌변을 인수분해하면",
+    "",
+    "$$x^2 - 5x + 6 = (x-2)(x-3) = 0$$",
+    "",
+    "따라서 $x = 2$ 또는 $x = 3$ 이다.",
+    "",
+    "| 판별식 $D=b^2-4ac$ | 실근의 개수 |",
+    "| --- | --- |",
+    "| $D>0$ | 서로 다른 두 실근 |",
+    "| $D=0$ | 중근 (한 실근) |",
+    "| $D<0$ | 실근 없음 |",
+    ""
+  ].join("\n");
+
+  var md = window.markdownit ? window.markdownit({ html: false, linkify: true, breaks: false }) : null;
+
+  var editor = document.getElementById("editor");
+  var previewBody = document.getElementById("preview-body");
+  var preview = document.getElementById("preview");
+  var filenameInput = document.getElementById("filename");
+  var charCount = document.getElementById("char-count");
+  var mathCount = document.getElementById("math-count");
+  var saveState = document.getElementById("save-state");
+  var tabEdit = document.getElementById("tab-edit");
+  var tabPreview = document.getElementById("tab-preview");
+  var paneEdit = document.getElementById("pane-edit");
+  var panePreview = document.getElementById("pane-preview");
+  var printTitle = document.getElementById("print-title");
+  var printDate = document.getElementById("print-date");
+
+  var renderTimer = null;
+  var saveTimer = null;
+  var STORAGE_KEY = "susiknote-draft-v1";
+  var STORAGE_NAME_KEY = "susiknote-filename-v1";
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function extractMath(src) {
+    var tokens = [];
+    var text = src;
+
+    text = text.replace(/(?<!\\)\$\$([\s\S]*?)\$\$/g, function (m, latex) {
+      var idx = tokens.length;
+      tokens.push({ latex: latex, display: true });
+      return "\u0000M" + idx + "\u0000";
+    });
+
+    text = text.replace(/(?<!\\)\$((?:\\.|[^$\n])+?)(?<!\\)\$/g, function (m, latex) {
+      var idx = tokens.length;
+      tokens.push({ latex: latex, display: false });
+      return "\u0000M" + idx + "\u0000";
+    });
+
+    return { text: text, tokens: tokens };
+  }
+
+  function renderMathToken(token) {
+    if (typeof window.katex === "undefined") {
+      var raw = token.display ? "$$" + token.latex + "$$" : "$" + token.latex + "$";
+      return escapeHtml(raw);
+    }
+    try {
+      return katex.renderToString(token.latex, {
+        displayMode: token.display,
+        throwOnError: true,
+        strict: "ignore"
+      });
+    } catch (e) {
+      var rawFail = token.display ? "$$" + token.latex + "$$" : "$" + token.latex + "$";
+      return '<span class="math-error" title="' + escapeHtml(e.message || "수식 오류") + '">' + escapeHtml(rawFail) + "</span>";
+    }
+  }
+
+  function renderPreview() {
+    var src = editor.value;
+    charCount.textContent = src.length + "자";
+
+    var extracted = extractMath(src);
+    var html;
+    try {
+      html = md ? md.render(extracted.text) : escapeHtml(extracted.text).replace(/\n/g, "<br>");
+    } catch (e) {
+      html = "<p>마크다운을 표시할 수 없습니다.</p>";
+    }
+
+    for (var i = 0; i < extracted.tokens.length; i++) {
+      var placeholder = "\u0000M" + i + "\u0000";
+      html = html.split(placeholder).join(renderMathToken(extracted.tokens[i]));
+    }
+    mathCount.textContent = "수식 " + extracted.tokens.length + "개";
+
+    previewBody.innerHTML = html;
+    preview.classList.toggle("empty", src.trim().length === 0);
+  }
+
+  function scheduleRender() {
+    if (renderTimer) clearTimeout(renderTimer);
+    renderTimer = setTimeout(renderPreview, 150);
+  }
+
+  function persistDraft() {
+    try {
+      localStorage.setItem(STORAGE_KEY, editor.value);
+      localStorage.setItem(STORAGE_NAME_KEY, filenameInput.value);
+      saveState.textContent = "브라우저에 자동 저장됨";
+    } catch (e) {
+      saveState.textContent = "자동 저장 사용 불가 (이 브라우저 환경)";
+    }
+  }
+
+  function scheduleSave() {
+    saveState.textContent = "저장 중…";
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(persistDraft, 400);
+  }
+
+  function loadDraft() {
+    try {
+      var savedText = localStorage.getItem(STORAGE_KEY);
+      var savedName = localStorage.getItem(STORAGE_NAME_KEY);
+      if (savedText !== null) {
+        editor.value = savedText;
+        if (savedName) filenameInput.value = savedName;
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  if (!loadDraft()) {
+    editor.value = SAMPLE_NOTE;
+  }
+
+  editor.addEventListener("input", function () {
+    scheduleRender();
+    scheduleSave();
+  });
+  filenameInput.addEventListener("input", scheduleSave);
+
+  renderPreview();
+
+  // ---- Mobile/tablet tab switching (hidden automatically at >=860px via CSS) ----
+  function setMode(mode) {
+    var editing = mode === "edit";
+    tabEdit.setAttribute("aria-selected", editing ? "true" : "false");
+    tabPreview.setAttribute("aria-selected", editing ? "false" : "true");
+    paneEdit.classList.toggle("hide-narrow", !editing);
+    panePreview.classList.toggle("hide-narrow", editing);
+  }
+  tabEdit.addEventListener("click", function () { setMode("edit"); });
+  tabPreview.addEventListener("click", function () { setMode("preview"); });
+  setMode("edit");
+
+  // ---- New note ----
+  var confirmNew = document.getElementById("confirm-new");
+  document.getElementById("btn-new").addEventListener("click", function () {
+    confirmNew.hidden = false;
+  });
+  document.getElementById("confirm-new-no").addEventListener("click", function () {
+    confirmNew.hidden = true;
+  });
+  document.getElementById("confirm-new-yes").addEventListener("click", function () {
+    editor.value = "";
+    filenameInput.value = "새-노트";
+    confirmNew.hidden = true;
+    renderPreview();
+    persistDraft();
+    editor.focus();
+  });
+
+  // ---- Open file ----
+  var fileInput = document.getElementById("file-input");
+  document.getElementById("btn-open").addEventListener("click", function () {
+    fileInput.click();
+  });
+  fileInput.addEventListener("change", function () {
+    var file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      editor.value = String(reader.result || "");
+      var base = file.name.replace(/\.(md|markdown|txt)$/i, "");
+      filenameInput.value = base || filenameInput.value;
+      renderPreview();
+      persistDraft();
+    };
+    reader.onerror = function () {
+      saveState.textContent = "파일을 읽지 못했습니다";
+    };
+    reader.readAsText(file);
+    fileInput.value = "";
+  });
+
+  // ---- Save as Markdown (native download, no sandbox capability needed) ----
+  function safeName() {
+    var v = (filenameInput.value || "note").trim();
+    return v.length ? v : "note";
+  }
+
+  document.getElementById("btn-save-md").addEventListener("click", function () {
+    var blob = new Blob([editor.value], { type: "text/markdown" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = safeName() + ".md";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    saveState.textContent = "Markdown 파일로 저장됨";
+  });
+
+  // ---- Print / PDF (uses the browser's native print dialog → 'PDF로 저장' works on both tablet and phone) ----
+  document.getElementById("btn-print").addEventListener("click", function () {
+    printTitle.textContent = safeName();
+    printDate.textContent = new Date().toLocaleDateString("ko-KR", {
+      year: "numeric", month: "long", day: "numeric"
+    });
+    // Printing needs the preview pane visible even on a narrow (phone) layout.
+    var wasHidden = panePreview.classList.contains("hide-narrow");
+    if (wasHidden) panePreview.classList.remove("hide-narrow");
+    window.print();
+    if (wasHidden) panePreview.classList.add("hide-narrow");
+  });
+})();
+</script>
+</body>
+</html>

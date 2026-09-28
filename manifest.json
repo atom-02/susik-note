@@ -1,0 +1,20 @@
+{
+  "name": "수식노트",
+  "short_name": "수식노트",
+  "description": "수식이 포함된 마크다운을 태블릿·휴대폰에서 편집하고 인쇄/PDF로 내보내는 앱",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f6f3",
+  "theme_color": "#3454d1",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
