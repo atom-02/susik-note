@@ -537,8 +537,7 @@
     #preview .katex-display { break-inside: avoid; }
     .print-only { display: block; margin-bottom: 16px; }
     .print-only h1 { font-family: "Noto Serif KR", serif; font-size: 22px; margin: 0 0 4px; }
-    .print-only .print-date { font-size: 12px; color: #555; }
-    @page { margin: 18mm 16mm; }
+      @page { margin: 18mm 16mm; }
   }
 </style>
 </head>
@@ -649,7 +648,6 @@
       <div id="preview">
         <div class="print-only" id="print-header">
           <h1 id="print-title"></h1>
-          <div class="print-date" id="print-date"></div>
         </div>
         <div id="preview-body"></div>
       </div>
@@ -720,7 +718,6 @@
   var paneEdit = document.getElementById("pane-edit");
   var panePreview = document.getElementById("pane-preview");
   var printTitle = document.getElementById("print-title");
-  var printDate = document.getElementById("print-date");
 
   var renderTimer = null;
   var saveTimer = null;
@@ -947,9 +944,6 @@
   document.getElementById("btn-print").addEventListener("click", function () {
     var manualTitle = (docTitleInput.value || "").trim();
     printTitle.textContent = manualTitle.length ? manualTitle : firstHeadingOrFallback(editor.value);
-    printDate.textContent = new Date().toLocaleDateString("ko-KR", {
-      year: "numeric", month: "long", day: "numeric"
-    });
     // Printing needs the preview pane visible even on a narrow (phone) layout.
     var wasHidden = panePreview.classList.contains("hide-narrow");
     if (wasHidden) panePreview.classList.remove("hide-narrow");
