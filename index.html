@@ -112,7 +112,17 @@
     font-size: 12px;
     color: var(--text-muted);
   }
-  input.filename {
+  .topbar-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .topbar-field label {
+    font-size: 11px;
+    color: var(--text-muted);
+    padding-left: 2px;
+  }
+  input.filename, input.doc-title {
     font: inherit;
     font-size: 15px;
     background: var(--surface-2);
@@ -124,7 +134,8 @@
     max-width: 44vw;
     height: var(--tap);
   }
-  input.filename:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  input.doc-title { width: 240px; }
+  input.filename:focus-visible, input.doc-title:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .toolbar {
     display: flex;
@@ -539,7 +550,14 @@
       <span class="mark">수식노트</span>
       <span class="tag">수식이 포함된 마크다운을 편집하고 내보냅니다</span>
     </div>
-    <input class="filename" id="filename" value="이차방정식-예제" aria-label="파일 이름" />
+    <div class="topbar-field">
+      <label for="doc-title">제목 (인쇄·PDF용)</label>
+      <input class="doc-title" id="doc-title" value="" placeholder="비워두면 본문 첫 줄 제목을 사용합니다" aria-label="인쇄·PDF에 표시될 제목" />
+    </div>
+    <div class="topbar-field">
+      <label for="filename">파일 이름</label>
+      <input class="filename" id="filename" value="이차방정식-예제" aria-label="저장할 파일 이름" />
+    </div>
   </div>
 
   <div class="toolbar">
@@ -693,6 +711,7 @@
   var previewBody = document.getElementById("preview-body");
   var preview = document.getElementById("preview");
   var filenameInput = document.getElementById("filename");
+  var docTitleInput = document.getElementById("doc-title");
   var charCount = document.getElementById("char-count");
   var mathCount = document.getElementById("math-count");
   var saveState = document.getElementById("save-state");
@@ -707,6 +726,7 @@
   var saveTimer = null;
   var STORAGE_KEY = "susiknote-draft-v1";
   var STORAGE_NAME_KEY = "susiknote-filename-v1";
+  var STORAGE_TITLE_KEY = "susiknote-doctitle-v1";
   var BANK_KEY = "susiknote-bank-v1";
   var currentBankId = null; // set when the editor currently holds a problem loaded from the bank
   var activeTagFilters = {}; // tag string -> true, while the 문제 목록 modal is open
@@ -789,6 +809,7 @@
     try {
       localStorage.setItem(STORAGE_KEY, editor.value);
       localStorage.setItem(STORAGE_NAME_KEY, filenameInput.value);
+      localStorage.setItem(STORAGE_TITLE_KEY, docTitleInput.value);
       saveState.textContent = "브라우저에 자동 저장됨";
     } catch (e) {
       saveState.textContent = "자동 저장 사용 불가 (이 브라우저 환경)";
@@ -805,9 +826,11 @@
     try {
       var savedText = localStorage.getItem(STORAGE_KEY);
       var savedName = localStorage.getItem(STORAGE_NAME_KEY);
+      var savedTitle = localStorage.getItem(STORAGE_TITLE_KEY);
       if (savedText !== null) {
         editor.value = savedText;
         if (savedName) filenameInput.value = savedName;
+        if (savedTitle) docTitleInput.value = savedTitle;
         return true;
       }
     } catch (e) {}
@@ -816,6 +839,7 @@
 
   if (!loadDraft()) {
     editor.value = SAMPLE_NOTE;
+    docTitleInput.value = firstHeadingOrFallback(SAMPLE_NOTE);
   }
 
   editor.addEventListener("input", function () {
@@ -823,6 +847,7 @@
     scheduleSave();
   });
   filenameInput.addEventListener("input", scheduleSave);
+  docTitleInput.addEventListener("input", scheduleSave);
 
   renderPreview();
 
@@ -863,6 +888,7 @@
       function () {
         editor.value = "";
         filenameInput.value = "새-노트";
+        docTitleInput.value = "";
         currentBankId = null;
         renderPreview();
         persistDraft();
@@ -884,6 +910,9 @@
       editor.value = String(reader.result || "");
       var base = file.name.replace(/\.(md|markdown|txt)$/i, "");
       filenameInput.value = base || filenameInput.value;
+      // 인쇄 제목은 파일 이름이 아니라 본문 내용(첫 제목 줄)에서 가져온다 —
+      // 업로드한 파일 이름과 문서 제목이 다를 수 있기 때문 (필요하면 직접 수정 가능).
+      docTitleInput.value = firstHeadingOrFallback(editor.value);
       currentBankId = null;
       renderPreview();
       persistDraft();
@@ -916,7 +945,8 @@
 
   // ---- Print / PDF (uses the browser's native print dialog → 'PDF로 저장' works on both tablet and phone) ----
   document.getElementById("btn-print").addEventListener("click", function () {
-    printTitle.textContent = safeName();
+    var manualTitle = (docTitleInput.value || "").trim();
+    printTitle.textContent = manualTitle.length ? manualTitle : firstHeadingOrFallback(editor.value);
     printDate.textContent = new Date().toLocaleDateString("ko-KR", {
       year: "numeric", month: "long", day: "numeric"
     });
@@ -1182,6 +1212,7 @@
   function loadProblemIntoEditor(p) {
     editor.value = p.content;
     filenameInput.value = p.title;
+    docTitleInput.value = p.title;
     currentBankId = p.id;
     renderPreview();
     persistDraft();
@@ -1230,6 +1261,7 @@
         var parts = chosen.map(function (p, i) { return "## " + (i + 1) + ". " + p.title + "\n\n" + p.content.trim(); });
         editor.value = parts.join("\n\n---\n\n") + "\n";
         filenameInput.value = "시험지-" + new Date().toISOString().slice(0, 10);
+        docTitleInput.value = "시험지";
         currentBankId = null;
         renderPreview();
         persistDraft();
