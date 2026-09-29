@@ -615,6 +615,27 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="save-md-modal" hidden>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>⬇️ Markdown 파일로 저장</h2>
+        <button class="ghost" id="save-md-close" title="닫기">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="save-md-filename-input">파일 이름</label>
+          <input type="text" id="save-md-filename-input" placeholder="예: 이차방정식-예제" />
+          <div class="hint">.md 확장자는 자동으로 붙습니다.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="spacer"></span>
+        <button class="ghost" id="save-md-cancel">취소</button>
+        <button class="primary" id="save-md-confirm">저장</button>
+      </div>
+    </div>
+  </div>
+
   <div class="tabs" role="tablist" aria-label="보기 전환">
     <button role="tab" id="tab-edit" aria-selected="true">✏️ 에디터</button>
     <button role="tab" id="tab-preview" aria-selected="false">👁️ 미리보기</button>
@@ -903,17 +924,46 @@
     return v.length ? v : "note";
   }
 
-  document.getElementById("btn-save-md").addEventListener("click", function () {
+  function downloadMarkdown(name) {
     var blob = new Blob([editor.value], { type: "text/markdown" });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
-    a.download = safeName() + ".md";
+    a.download = name + ".md";
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
     saveState.textContent = "Markdown 파일로 저장됨";
+  }
+
+  // ---- Markdown 저장 시 파일 이름을 직접 입력하는 모달 ----
+  var saveMdModal = document.getElementById("save-md-modal");
+  var saveMdFilenameInput = document.getElementById("save-md-filename-input");
+
+  function openSaveMdModal() {
+    saveMdFilenameInput.value = safeName();
+    saveMdModal.hidden = false;
+    saveMdFilenameInput.focus();
+    saveMdFilenameInput.select();
+  }
+  function closeSaveMdModal() { saveMdModal.hidden = true; }
+
+  document.getElementById("btn-save-md").addEventListener("click", openSaveMdModal);
+  document.getElementById("save-md-close").addEventListener("click", closeSaveMdModal);
+  document.getElementById("save-md-cancel").addEventListener("click", closeSaveMdModal);
+  saveMdModal.addEventListener("click", function (e) { if (e.target === saveMdModal) closeSaveMdModal(); });
+
+  document.getElementById("save-md-confirm").addEventListener("click", function () {
+    var raw = saveMdFilenameInput.value.trim();
+    var name = raw.length ? raw.replace(/\.(md|markdown)$/i, "") : "note";
+    filenameInput.value = name; // 상단 "파일 이름"과도 계속 일치시켜 둔다
+    persistDraft();
+    downloadMarkdown(name);
+    closeSaveMdModal();
+  });
+  saveMdFilenameInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); document.getElementById("save-md-confirm").click(); }
   });
 
   // ---- Print / PDF (uses the browser's native print dialog → 'PDF로 저장' works on both tablet and phone) ----
