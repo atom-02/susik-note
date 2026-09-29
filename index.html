@@ -164,16 +164,201 @@
   button:disabled:hover { border-color: var(--border); color: var(--text); }
 
   .confirm-strip {
+    /* position:fixed (not just a high z-index) so this reliably shows above the
+       bank/save modals too — z-index has no effect on a statically-positioned
+       element, and this strip can be triggered from inside those modals. */
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    max-width: 700px;
+    margin-inline: auto;
     display: flex;
     align-items: center;
     gap: 10px;
     background: var(--danger-soft);
     border: 1px solid var(--danger);
     border-radius: 10px;
-    padding: 8px 12px;
+    padding: 10px 14px;
     font-size: 13px;
     flex-wrap: wrap;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    z-index: 100;
   }
+
+  /* ---- Modals (문제 목록 / 문제로 저장) ---- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 17, 22, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 50;
+  }
+  .modal-panel {
+    background: var(--surface);
+    border-radius: 14px;
+    width: 100%;
+    max-width: 580px;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+    font-family: "Noto Serif KR", serif;
+  }
+  .modal-body {
+    padding: 12px 16px;
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-footer {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .modal-footer .spacer { flex: 1; }
+
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+  .field input[type="text"] {
+    width: 100%;
+    font: inherit;
+    font-size: 15px;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
+    color: var(--text);
+    height: var(--tap);
+  }
+  .field .hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .bank-search input[type="text"] { margin-bottom: 10px; }
+  .tag-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .tag-chip {
+    font-size: 12px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    cursor: pointer;
+    min-height: 0;
+  }
+  .tag-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .bank-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+  .bank-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: var(--accent);
+  }
+  .bank-item .meta { flex: 1; min-width: 0; }
+  .bank-item .item-title {
+    font-weight: 600;
+    background: none;
+    border: none;
+    padding: 0;
+    min-height: 0;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+  }
+  .bank-item .item-title:hover { color: var(--accent-strong); }
+  .bank-item .item-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 5px;
+  }
+  .bank-item .item-tags span {
+    font-size: 11px;
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    border-radius: 999px;
+    padding: 2px 9px;
+  }
+  .bank-item .item-date { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+  .bank-item .item-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .bank-item .item-actions button {
+    font-size: 12px;
+    padding: 5px 10px;
+    min-height: 0;
+  }
+  .bank-empty {
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 28px 0;
+    text-align: center;
+  }
+  .bank-count { font-size: 12px; color: var(--text-muted); }
+
+  /* ---- 정답 접기 (<details>/<summary>) ---- */
+  #preview details {
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 6px 14px;
+    margin: 16px 0;
+  }
+  #preview details[open] { padding-bottom: 14px; }
+  #preview details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--accent-strong);
+    padding: 8px 0;
+  }
+  #preview details summary::marker { color: var(--accent); }
+  #preview details > *:not(summary) { margin-top: 10px; }
+  #preview details p:last-child,
+  #preview details .katex-display:last-child { margin-bottom: 0 !important; }
 
   .tabs {
     display: flex;
@@ -331,7 +516,9 @@
 
   @media print {
     body { background: #fff; color: #000; padding: 0; }
-    .topbar, .toolbar, .confirm-strip, .tabs, .statusbar, #pane-edit, .pane-head { display: none !important; }
+    .topbar, .toolbar, .confirm-strip, .tabs, .statusbar, #pane-edit, .pane-head, .modal-overlay { display: none !important; }
+    #preview details { border: 1px solid #999; background: none; }
+    #preview details summary { color: #000; }
     #app { max-width: none; padding: 0; gap: 0; min-height: 0; }
     .workspace { display: block; min-height: 0; }
     .pane { border: none; border-radius: 0; display: block !important; }
@@ -359,14 +546,65 @@
     <button class="ghost" id="btn-new" title="편집 중인 내용을 지우고 새로 시작">📝 새 노트</button>
     <button class="ghost" id="btn-open" title="기기에서 .md 파일 열기">📂 열기</button>
     <input type="file" id="file-input" accept=".md,.markdown,.txt,text/markdown,text/plain" />
-    <button id="btn-save-md" title="마크다운(.md) 파일로 저장">💾 Markdown</button>
+    <button class="ghost" id="btn-bank" title="저장된 문제 목록 열기">📚 문제 목록</button>
+    <button id="btn-save-bank" title="지금 내용을 문제 목록에 저장">💾 문제로 저장</button>
+    <button id="btn-save-md" title="마크다운(.md) 파일로 저장">⬇️ Markdown</button>
     <button class="primary" id="btn-print" title="인쇄하거나 PDF로 저장">🖨️ 인쇄 / PDF</button>
   </div>
 
-  <div id="confirm-new" class="confirm-strip" hidden>
-    <span>지금 내용을 지우고 새 노트를 시작할까요? 저장하지 않은 내용은 사라집니다.</span>
-    <button class="danger" id="confirm-new-yes">지우기</button>
-    <button class="ghost" id="confirm-new-no">취소</button>
+  <div id="confirm-strip" class="confirm-strip" hidden>
+    <span id="confirm-message"></span>
+    <button class="danger" id="confirm-yes"></button>
+    <button class="ghost" id="confirm-no">취소</button>
+  </div>
+
+  <!-- 문제 목록 모달 -->
+  <div class="modal-overlay" id="bank-modal" hidden>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>📚 문제 목록</h2>
+        <button class="ghost" id="bank-close" title="닫기">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="bank-search">
+          <input type="text" id="bank-search-input" placeholder="제목·태그·내용 검색" />
+        </div>
+        <div class="tag-chip-row" id="bank-tag-row"></div>
+        <div id="bank-list"></div>
+      </div>
+      <div class="modal-footer">
+        <span class="bank-count" id="bank-selected-count"></span>
+        <span class="spacer"></span>
+        <button class="primary" id="bank-build-worksheet">선택 항목으로 시험지 만들기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 문제로 저장 모달 -->
+  <div class="modal-overlay" id="save-modal" hidden>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2 id="save-modal-title">💾 문제로 저장</h2>
+        <button class="ghost" id="save-close" title="닫기">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="save-title-input">제목</label>
+          <input type="text" id="save-title-input" placeholder="예: 근의 공식 기본 적용" />
+        </div>
+        <div class="field">
+          <label for="save-tags-input">태그 (쉼표로 구분)</label>
+          <input type="text" id="save-tags-input" placeholder="예: 이차방정식, 난이도-하, 서술형" />
+          <div class="hint">단원·난이도·유형처럼 나중에 찾고 싶은 기준으로 자유롭게 적으세요.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="spacer"></span>
+        <button class="ghost" id="save-cancel">취소</button>
+        <button class="ghost" id="save-as-new" hidden>새 문제로 저장</button>
+        <button class="primary" id="save-confirm">저장</button>
+      </div>
+    </div>
   </div>
 
   <div class="tabs" role="tablist" aria-label="보기 전환">
@@ -384,7 +622,10 @@
     </div>
     <div class="pane hide-narrow" id="pane-preview">
       <div class="pane-head">
-        <span class="label">미리보기</span>
+        <span style="display:flex; align-items:center; gap:10px;">
+          <span class="label">미리보기</span>
+          <button class="ghost" id="btn-toggle-answers" title="모든 정답 상자를 펼치거나 접기" style="min-height:0; padding:4px 10px; font-size:12px;">정답 모두 펼치기</button>
+        </span>
         <span class="count" id="math-count">수식 0개</span>
       </div>
       <div id="preview">
@@ -398,7 +639,7 @@
   </div>
 
   <div class="statusbar">
-    <span>인라인 수식은 <code>$…$</code>, 블록 수식은 <code>$$…$$</code> 로 씁니다.</span>
+    <span>수식은 <code>$…$</code>/<code>$$…$$</code>, 정답 접기는 <code>&lt;details&gt;&lt;summary&gt;정답</code> 형태로 씁니다.</span>
     <span class="save-state" id="save-state">브라우저에 자동 저장됨</span>
   </div>
 </div>
@@ -424,13 +665,15 @@
     "",
     "$$x^2 - 5x + 6 = 0$$",
     "",
-    "**풀이**",
+    "<details><summary>정답 및 풀이 보기</summary>",
     "",
     "좌변을 인수분해하면",
     "",
     "$$x^2 - 5x + 6 = (x-2)(x-3) = 0$$",
     "",
     "따라서 $x = 2$ 또는 $x = 3$ 이다.",
+    "",
+    "</details>",
     "",
     "| 판별식 $D=b^2-4ac$ | 실근의 개수 |",
     "| --- | --- |",
@@ -440,7 +683,11 @@
     ""
   ].join("\n");
 
-  var md = window.markdownit ? window.markdownit({ html: false, linkify: true, breaks: false }) : null;
+  // html:true lets a problem's answer be written as a native, click-to-reveal
+  // <details><summary>...</summary>...</details> block (see SAMPLE_NOTE below).
+  // This editor has no shared/multi-user input, so the usual "don't allow raw
+  // HTML" XSS concern for markdown-it doesn't apply here.
+  var md = window.markdownit ? window.markdownit({ html: true, linkify: true, breaks: false }) : null;
 
   var editor = document.getElementById("editor");
   var previewBody = document.getElementById("preview-body");
@@ -460,6 +707,9 @@
   var saveTimer = null;
   var STORAGE_KEY = "susiknote-draft-v1";
   var STORAGE_NAME_KEY = "susiknote-filename-v1";
+  var BANK_KEY = "susiknote-bank-v1";
+  var currentBankId = null; // set when the editor currently holds a problem loaded from the bank
+  var activeTagFilters = {}; // tag string -> true, while the 문제 목록 modal is open
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -588,21 +838,37 @@
   tabPreview.addEventListener("click", function () { setMode("preview"); });
   setMode("edit");
 
+  // ---- Generic confirm strip (재사용: 새 노트 / 시험지로 합치기) ----
+  var confirmStrip = document.getElementById("confirm-strip");
+  var confirmMessage = document.getElementById("confirm-message");
+  var confirmYesBtn = document.getElementById("confirm-yes");
+  document.getElementById("confirm-no").addEventListener("click", function () {
+    confirmStrip.hidden = true;
+  });
+  function showConfirm(message, yesLabel, onYes) {
+    confirmMessage.textContent = message;
+    confirmYesBtn.textContent = yesLabel;
+    confirmYesBtn.onclick = function () {
+      confirmStrip.hidden = true;
+      onYes();
+    };
+    confirmStrip.hidden = false;
+  }
+
   // ---- New note ----
-  var confirmNew = document.getElementById("confirm-new");
   document.getElementById("btn-new").addEventListener("click", function () {
-    confirmNew.hidden = false;
-  });
-  document.getElementById("confirm-new-no").addEventListener("click", function () {
-    confirmNew.hidden = true;
-  });
-  document.getElementById("confirm-new-yes").addEventListener("click", function () {
-    editor.value = "";
-    filenameInput.value = "새-노트";
-    confirmNew.hidden = true;
-    renderPreview();
-    persistDraft();
-    editor.focus();
+    showConfirm(
+      "지금 내용을 지우고 새 노트를 시작할까요? 저장하지 않은 내용은 사라집니다.",
+      "지우기",
+      function () {
+        editor.value = "";
+        filenameInput.value = "새-노트";
+        currentBankId = null;
+        renderPreview();
+        persistDraft();
+        editor.focus();
+      }
+    );
   });
 
   // ---- Open file ----
@@ -618,6 +884,7 @@
       editor.value = String(reader.result || "");
       var base = file.name.replace(/\.(md|markdown|txt)$/i, "");
       filenameInput.value = base || filenameInput.value;
+      currentBankId = null;
       renderPreview();
       persistDraft();
     };
@@ -658,6 +925,317 @@
     if (wasHidden) panePreview.classList.remove("hide-narrow");
     window.print();
     if (wasHidden) panePreview.classList.add("hide-narrow");
+  });
+
+  // ---- 정답 모두 펼치기/접기 ----
+  // (닫힌 <details>는 인쇄 시 내용이 찍히지 않으므로: 학생용 백지 시험지는 그대로 인쇄,
+  //  정답이 포함된 채점용 인쇄물은 먼저 이 버튼으로 펼친 뒤 인쇄하면 된다.)
+  document.getElementById("btn-toggle-answers").addEventListener("click", function (e) {
+    var boxes = previewBody.querySelectorAll("details");
+    var anyClosed = Array.prototype.some.call(boxes, function (d) { return !d.open; });
+    Array.prototype.forEach.call(boxes, function (d) { d.open = anyClosed; });
+    e.target.textContent = anyClosed ? "정답 모두 접기" : "정답 모두 펼치기";
+  });
+
+  // ================= 문제 목록 (은행) =================
+  function loadBank() {
+    try {
+      var raw = localStorage.getItem(BANK_KEY);
+      var list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveBankList(list) {
+    try {
+      localStorage.setItem(BANK_KEY, JSON.stringify(list));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function makeId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return window.crypto.randomUUID();
+    }
+    return "id-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  }
+
+  function parseTags(raw) {
+    return String(raw || "")
+      .split(",")
+      .map(function (t) { return t.trim(); })
+      .filter(function (t) { return t.length > 0; });
+  }
+
+  function firstHeadingOrFallback(text) {
+    var m = /^#{1,3}\s+(.+)$/m.exec(text);
+    if (m) return m[1].trim();
+    var firstLine = text.split("\n").map(function (l) { return l.trim(); }).filter(Boolean)[0];
+    return firstLine ? firstLine.slice(0, 40) : "제목 없는 문제";
+  }
+
+  // ---- 문제로 저장 모달 ----
+  var saveModal = document.getElementById("save-modal");
+  var saveModalTitle = document.getElementById("save-modal-title");
+  var saveTitleInput = document.getElementById("save-title-input");
+  var saveTagsInput = document.getElementById("save-tags-input");
+
+  var saveAsNewBtn = document.getElementById("save-as-new");
+  var saveConfirmBtn = document.getElementById("save-confirm");
+
+  function openSaveModal() {
+    var bank = loadBank();
+    var existing = currentBankId ? bank.find(function (p) { return p.id === currentBankId; }) : null;
+    if (existing) {
+      // 편집기 내용이 '불러온 문제를 다듬는 중'일 수도, '새 문제를 쓰다가 새 노트를
+      // 누르는 걸 잊은 것'일 수도 있어 구분할 수 없다. 그래서 항상 두 버튼을 모두
+      // 보여주고 사람이 직접 고르게 한다 — 조용히 다른 문제를 덮어쓰는 사고를 막는다.
+      saveModalTitle.textContent = "💾 문제 저장";
+      saveTitleInput.value = existing.title;
+      saveTagsInput.value = existing.tags.join(", ");
+      saveAsNewBtn.hidden = false;
+      saveConfirmBtn.textContent = "\"" + existing.title + "\" 수정 저장";
+    } else {
+      saveModalTitle.textContent = "💾 새 문제로 저장";
+      saveTitleInput.value = firstHeadingOrFallback(editor.value);
+      saveTagsInput.value = "";
+      saveAsNewBtn.hidden = true;
+      saveConfirmBtn.textContent = "저장";
+    }
+    saveModal.hidden = false;
+    saveTitleInput.focus();
+  }
+  function closeSaveModal() { saveModal.hidden = true; }
+
+  document.getElementById("btn-save-bank").addEventListener("click", openSaveModal);
+  document.getElementById("save-close").addEventListener("click", closeSaveModal);
+  document.getElementById("save-cancel").addEventListener("click", closeSaveModal);
+  saveModal.addEventListener("click", function (e) { if (e.target === saveModal) closeSaveModal(); });
+
+  function createBankEntry(title, tags) {
+    var bank = loadBank();
+    var entry = { id: makeId(), title: title, tags: tags, content: editor.value, updatedAt: new Date().toISOString() };
+    bank.push(entry);
+    saveBankList(bank);
+    currentBankId = entry.id;
+    saveState.textContent = "문제 목록에 새로 저장됨";
+  }
+
+  saveConfirmBtn.addEventListener("click", function () {
+    var title = saveTitleInput.value.trim() || "제목 없는 문제";
+    var tags = parseTags(saveTagsInput.value);
+    var bank = loadBank();
+    var idx = currentBankId ? bank.findIndex(function (p) { return p.id === currentBankId; }) : -1;
+
+    if (idx !== -1) {
+      bank[idx].title = title;
+      bank[idx].tags = tags;
+      bank[idx].content = editor.value;
+      bank[idx].updatedAt = new Date().toISOString();
+      saveBankList(bank);
+      saveState.textContent = "문제 목록에 수정 저장됨";
+    } else {
+      createBankEntry(title, tags);
+    }
+    closeSaveModal();
+  });
+
+  saveAsNewBtn.addEventListener("click", function () {
+    var title = saveTitleInput.value.trim() || "제목 없는 문제";
+    var tags = parseTags(saveTagsInput.value);
+    createBankEntry(title, tags);
+    closeSaveModal();
+  });
+
+  // ---- 문제 목록 모달 ----
+  var bankModal = document.getElementById("bank-modal");
+  var bankSearchInput = document.getElementById("bank-search-input");
+  var bankTagRow = document.getElementById("bank-tag-row");
+  var bankListEl = document.getElementById("bank-list");
+  var bankSelectedCount = document.getElementById("bank-selected-count");
+  var selectedIds = {};
+
+  function allTagsFrom(bank) {
+    var set = {};
+    bank.forEach(function (p) { (p.tags || []).forEach(function (t) { set[t] = true; }); });
+    return Object.keys(set).sort();
+  }
+
+  function formatDate(iso) {
+    try {
+      return new Date(iso).toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+    } catch (e) { return ""; }
+  }
+
+  function renderBankModal() {
+    var bank = loadBank();
+    var query = bankSearchInput.value.trim().toLowerCase();
+    var activeTags = Object.keys(activeTagFilters).filter(function (t) { return activeTagFilters[t]; });
+
+    // 태그 칩 목록
+    var tags = allTagsFrom(bank);
+    bankTagRow.innerHTML = "";
+    if (tags.length === 0) {
+      bankTagRow.hidden = true;
+    } else {
+      bankTagRow.hidden = false;
+      tags.forEach(function (tag) {
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "tag-chip" + (activeTagFilters[tag] ? " active" : "");
+        chip.textContent = "#" + tag;
+        chip.addEventListener("click", function () {
+          activeTagFilters[tag] = !activeTagFilters[tag];
+          renderBankModal();
+        });
+        bankTagRow.appendChild(chip);
+      });
+    }
+
+    // 필터링
+    var filtered = bank.filter(function (p) {
+      var matchesQuery = !query ||
+        p.title.toLowerCase().indexOf(query) !== -1 ||
+        p.content.toLowerCase().indexOf(query) !== -1 ||
+        (p.tags || []).some(function (t) { return t.toLowerCase().indexOf(query) !== -1; });
+      var matchesTags = activeTags.length === 0 ||
+        activeTags.some(function (t) { return (p.tags || []).indexOf(t) !== -1; });
+      return matchesQuery && matchesTags;
+    });
+    filtered.sort(function (a, b) { return (b.updatedAt || "").localeCompare(a.updatedAt || ""); });
+
+    bankListEl.innerHTML = "";
+    if (bank.length === 0) {
+      bankListEl.innerHTML = '<div class="bank-empty">아직 저장된 문제가 없습니다.<br>편집기에서 문제를 작성한 뒤 "💾 문제로 저장"을 눌러보세요.</div>';
+    } else if (filtered.length === 0) {
+      bankListEl.innerHTML = '<div class="bank-empty">조건에 맞는 문제가 없습니다.</div>';
+    } else {
+      filtered.forEach(function (p) {
+        var row = document.createElement("div");
+        row.className = "bank-item";
+
+        var checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = !!selectedIds[p.id];
+        checkbox.addEventListener("change", function () {
+          if (checkbox.checked) selectedIds[p.id] = true; else delete selectedIds[p.id];
+          updateSelectedCount();
+        });
+
+        var meta = document.createElement("div");
+        meta.className = "meta";
+
+        var titleBtn = document.createElement("button");
+        titleBtn.type = "button";
+        titleBtn.className = "item-title";
+        titleBtn.textContent = p.title;
+        titleBtn.title = "편집기로 불러오기";
+        titleBtn.addEventListener("click", function () { loadProblemIntoEditor(p); });
+
+        var tagsDiv = document.createElement("div");
+        tagsDiv.className = "item-tags";
+        (p.tags || []).forEach(function (t) {
+          var span = document.createElement("span");
+          span.textContent = "#" + t;
+          tagsDiv.appendChild(span);
+        });
+
+        var dateDiv = document.createElement("div");
+        dateDiv.className = "item-date";
+        dateDiv.textContent = formatDate(p.updatedAt);
+
+        meta.appendChild(titleBtn);
+        if ((p.tags || []).length) meta.appendChild(tagsDiv);
+        meta.appendChild(dateDiv);
+
+        var actions = document.createElement("div");
+        actions.className = "item-actions";
+        var loadBtn = document.createElement("button");
+        loadBtn.className = "ghost";
+        loadBtn.textContent = "불러오기";
+        loadBtn.addEventListener("click", function () { loadProblemIntoEditor(p); });
+        var delBtn = document.createElement("button");
+        delBtn.className = "danger ghost";
+        delBtn.textContent = "삭제";
+        delBtn.addEventListener("click", function () { deleteProblem(p.id); });
+        actions.appendChild(loadBtn);
+        actions.appendChild(delBtn);
+
+        row.appendChild(checkbox);
+        row.appendChild(meta);
+        row.appendChild(actions);
+        bankListEl.appendChild(row);
+      });
+    }
+    updateSelectedCount();
+  }
+
+  function updateSelectedCount() {
+    var n = Object.keys(selectedIds).length;
+    bankSelectedCount.textContent = n > 0 ? n + "개 선택됨" : "";
+  }
+
+  function loadProblemIntoEditor(p) {
+    editor.value = p.content;
+    filenameInput.value = p.title;
+    currentBankId = p.id;
+    renderPreview();
+    persistDraft();
+    closeBankModal();
+  }
+
+  function deleteProblem(id) {
+    showConfirm("이 문제를 목록에서 삭제할까요? 되돌릴 수 없습니다.", "삭제", function () {
+      var bank = loadBank().filter(function (p) { return p.id !== id; });
+      saveBankList(bank);
+      delete selectedIds[id];
+      if (currentBankId === id) currentBankId = null;
+      renderBankModal();
+    });
+  }
+
+  function openBankModal() {
+    selectedIds = {};
+    activeTagFilters = {};
+    bankSearchInput.value = "";
+    renderBankModal();
+    bankModal.hidden = false;
+  }
+  function closeBankModal() { bankModal.hidden = true; }
+
+  document.getElementById("btn-bank").addEventListener("click", openBankModal);
+  document.getElementById("bank-close").addEventListener("click", closeBankModal);
+  bankModal.addEventListener("click", function (e) { if (e.target === bankModal) closeBankModal(); });
+  bankSearchInput.addEventListener("input", renderBankModal);
+
+  document.getElementById("bank-build-worksheet").addEventListener("click", function () {
+    var ids = Object.keys(selectedIds);
+    if (ids.length === 0) {
+      bankSelectedCount.textContent = "먼저 문제를 선택하세요";
+      return;
+    }
+    var bank = loadBank();
+    var chosen = bank.filter(function (p) { return selectedIds[p.id]; });
+    // 목록에 표시된 순서(최근 수정순)를 유지
+    chosen.sort(function (a, b) { return (b.updatedAt || "").localeCompare(a.updatedAt || ""); });
+
+    showConfirm(
+      "선택한 " + chosen.length + "개 문제로 시험지를 만들까요? 지금 편집기 내용은 사라집니다.",
+      "만들기",
+      function () {
+        var parts = chosen.map(function (p, i) { return "## " + (i + 1) + ". " + p.title + "\n\n" + p.content.trim(); });
+        editor.value = parts.join("\n\n---\n\n") + "\n";
+        filenameInput.value = "시험지-" + new Date().toISOString().slice(0, 10);
+        currentBankId = null;
+        renderPreview();
+        persistDraft();
+        closeBankModal();
+      }
+    );
   });
 })();
 </script>
